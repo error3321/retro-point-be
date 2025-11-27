@@ -134,7 +134,7 @@ app.get("/promocao", async (req, res) => {
     const db = conectarBD();
 
     try {
-        const resultado = await db.query("SELECT * FROM promocao SELECT *FROM produtos ORDER BY data_criacao DESC LIMIT 3;"); // Executa uma consulta SQL para selecionar todas as questões
+        const resultado = await db.query("SELECT * FROM produto WHERE destaque = true ORDER BY data_criacao DESC LIMIT 3;"); // Executa uma consulta SQL para selecionar todas as questões
         const dados = resultado.rows; // Obtém as linhas retornadas pela consulta
         res.json(dados); // Retorna o resultado da consulta como JSON
     } catch (e) {
