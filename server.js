@@ -99,7 +99,6 @@ app.delete("/produto/:id", async (req, res) => {
   }
 });
 
-//server.js
 app.post("/produto", async (req, res) => {
   console.log("Rota POST /produto solicitada"); // Log no terminal para indicar que a rota foi acessada
 
@@ -144,6 +143,100 @@ app.get("/promocao", async (req, res) => {
         });
     }
 });
+
+
+
+//criar conta
+app.post("/register", async (req, res) => {
+    const { nome, email, senha } = req.body;
+
+    if (!nome || !email || !senha) {
+        return res.status(400).json({ mensagem: "Preencha todos os campos." });
+    }
+
+    const db = conectarBD();
+
+    try {
+        // Verifica se o email já está cadastrado
+        const existe = await db.query(
+            "SELECT id_usuario FROM usuario WHERE email = $1",
+            [email]
+        );
+
+        if (existe.rows.length > 0) {
+            return res.status(400).json({ mensagem: "Email já cadastrado." });
+        }
+
+        // Gera hash da senha
+        const senhaHash = await bcrypt.hash(senha, 10);
+
+        // Insere o usuário
+        await db.query(
+            `INSERT INTO usuario (nome, email, senha, role)
+             VALUES ($1, $2, $3, 'user')`,
+            [nome, email, senhaHash]
+        );
+
+        return res.status(201).json({ mensagem: "Usuário criado com sucesso!" });
+
+    } catch (erro) {
+        console.error("Erro ao cadastrar usuário:", erro);
+        return res.status(500).json({ mensagem: "Erro interno do servidor." });
+    }
+});
+
+// LOGIN
+app.post("/login", async (req, res) => {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+        return res.status(400).json({ mensagem: "Preencha todos os campos." });
+    }
+
+    const db = conectarBD();
+
+    try {
+        // 1. Buscar usuário no banco
+        const resultado = await db.query(
+            "SELECT id_usuario, nome, email, senha, role FROM usuario WHERE email = $1",
+            [email]
+        );
+
+        if (resultado.rows.length === 0) {
+            return res.status(401).json({ mensagem: "E-mail ou senha incorretos." });
+        }
+
+        const usuario = resultado.rows[0];
+
+        // 2. Comparar senha com bcrypt
+        const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+        if (!senhaCorreta) {
+            return res.status(401).json({ mensagem: "E-mail ou senha incorretos." });
+        }
+
+        // 3. Gerar token JWT
+        const token = jwt.sign(
+            {
+                id: usuario.id_usuario,
+                email: usuario.email,
+                role: usuario.role
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        // 4. Retornar token
+        res.json({
+            mensagem: "Login bem-sucedido!",
+            token
+        });
+
+    } catch (erro) {
+        console.error("Erro no login:", erro);
+        res.status(500).json({ mensagem: "Erro interno do servidor." });
+    }
+});
+
 
 // ######
 // Local onde o servidor irá escutar as requisições
