@@ -12,6 +12,9 @@ import cors from "cors";
 // Local onde as configurações do servidor serão feitas
 // ######
 const app = express(); // Inicializa o servidor Express
+app.use(cors());
+app.use(express.json());
+
 const port = 3000; // Define a porta onde o servidor irá escutar
 dotenv.config(); // Carrega as variáveis de ambiente do arquivo .env
 const { Pool } = pkg; // Obtém o construtor Pool do pacote pg para gerenciar conexões com o banco de dados PostgreSQL
@@ -88,7 +91,7 @@ app.delete("/produto/:id", async (req, res) => {
       return res.status(404).json({ mensagem: "Produto não encontrado" }); // Retorna erro 404 se o produto não for encontrado
     }
 
-    consulta = "DELETE FROM questoes WHERE id = $1"; // Consulta SQL para deletar o produto pelo ID
+    consulta = "DELETE FROM produto WHERE id = $1"; // Consulta SQL para deletar o produto pelo ID
     resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
     res.status(200).json({ mensagem: "Produto excluído com sucesso!!" }); // Retorna o resultado da consulta como JSON
   } catch (e) {
@@ -109,17 +112,18 @@ app.post("/produto", async (req, res) => {
       return res.status(400).json({
         erro: "Dados inválidos",
         mensagem:
-          "Todos os campos (id_produto, nome, email, descricao, preco, estoque, destaque) são obrigatórios.",
+          "Todos os campos (id_produto, nome, email, descricao, preco, estoque, destaque, data_cadastro) são obrigatórios.",
       });
     }
 
     const db = conectarBD(); // Conecta ao banco de dados
 
     const consulta =
-      "INSERT INTO produto () VALUES ($1,$2,$3,$4) "; // Consulta SQL para inserir a questão
-    const questao = [data.enunciado, data.disciplina, data.tema, data.nivel]; // Array com os valores a serem inseridos
-    const resultado = await db.query(consulta, questao); // Executa a consulta SQL com os valores fornecidos
-    res.status(201).json({ mensagem: "Produto criada com sucesso!" }); // Retorna o resultado da consulta como JSON
+      "INSERT INTO produto (id_produto, nome, email, descricao, preco, estoque, destaque, data_cadastro) VALUES ($1,$2,$3,$4) "; // Consulta SQL para inserir a questão
+    const valores = [data.enunciado, data.disciplina, data.tema, data.nivel]; // Array com os valores a serem inseridos
+    await db.query(consulta, valores); // Executa a consulta SQL com os valores fornecidos
+    
+    res.status(201).json({ mensagem: "Produto criado com sucesso!" }); // Retorna o resultado da consulta como JSON
   } catch (e) {
     console.error("Erro ao inserir produto:", e); // Log do erro no servidor
     res.status(500).json({
