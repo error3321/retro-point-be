@@ -12,7 +12,10 @@ import cors from "cors";
 // Local onde as configurações do servidor serão feitas
 // ######
 const app = express(); // Inicializa o servidor Express
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    credentials: false
+}));
 app.use(express.json());
 
 const port = 3000; // Define a porta onde o servidor irá escutar
