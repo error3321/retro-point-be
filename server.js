@@ -12,10 +12,29 @@ import cors from "cors";
 // Local onde as configurações do servidor serão feitas
 // ######
 const app = express(); // Inicializa o servidor Express
+
+// Configurar CORS com origens permitidas
+const allowedOrigins = [
+    'https://super-space-pancake-wrj6wv5g555259jq-5501.app.github.dev',
+    'http://localhost:3000',
+    'http://localhost:5501'
+    // Colocar o link do front-end da vercel quando disponível
+];
+
 app.use(cors({
-    origin: '*',
-    credentials: false
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS not allowed'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+
 app.use(express.json());
 
 const port = 3000; // Define a porta onde o servidor irá escutar
