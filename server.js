@@ -36,6 +36,70 @@ function conectarBD() {
 // ######
 // Local onde as rotas (endpoints) serão definidas
 // ######
+app.get("/usuario", async (req, res) => {
+
+    const db = conectarBD();
+
+    try {
+        const resultado = await db.query("SELECT * FROM usuario"); // Executa uma consulta SQL para selecionar todos os usuários
+        const dados = resultado.rows; // Obtém as linhas retornadas pela consulta
+        res.json(dados); // Retorna o resultado da consulta como JSON
+    } catch (e) {
+        console.error("Erro ao buscar usuário:", e); // Log do erro no servidor
+        res.status(500).json({
+            erro: "Erro interno do servidor"
+        });
+    }
+});
+
+app.get("/usuario/:id", async (req, res) => {
+
+    const db = conectarBD();
+
+    try {
+        const id = req.params.id;
+        const consulta = "SELECT * FROM usuario WHERE id = $1"; // Consulta SQL para selecionar o usuario pelo ID
+        const resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
+        const dados = resultado.rows; // Obtém as linhas retornadas pela consulta
+
+        if (dados.length === 0) {
+            return res.status(404).json({ mensagem: "Usuário não encontrado" }); // Retorna erro 404 se a produto não for encontrada
+        }
+
+        res.json(dados); // Retorna o resultado da consulta como JSON
+    } catch (e) {
+        console.error("Erro ao buscar usuário:", e); // Log do erro no servidor
+        res.status(500).json({
+            erro: "Erro interno do servidor"
+        });
+    }
+});
+
+app.delete("/usuario/:id", async (req, res) => {
+  console.log("Rota DELETE /usuario/:id solicitada"); // Log no terminal para indicar que a rota foi acessada
+
+  try {
+    const id = req.params.id; // Obtém o ID da questão a partir dos parâmetros da URL
+    const db = conectarBD(); // Conecta ao banco de dados
+    let consulta = "SELECT * FROM usuario WHERE id_usuario = $1"; // Consulta SQL para selecionar o produto pelo ID
+    let resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
+    let dados = resultado.rows; // Obtém as linhas retornadas pela consulta
+
+    // Verifica se o produto foi encontrado
+    if (dados.length === 0) {
+      return res.status(404).json({ mensagem: "Usuário não encontrado" }); // Retorna erro 404 se o usuário não for encontrado
+    }
+
+    consulta = "DELETE FROM usuario WHERE id_usuario = $1"; // Consulta SQL para deletar o usuário pelo ID
+    resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
+    res.status(200).json({ mensagem: "Usuário excluído com sucesso!!" }); // Retorna o resultado da consulta como JSON
+  } catch (e) {
+    console.error("Erro ao excluir usuário:", e); // Log do erro no servidor
+    res.status(500).json({
+      erro: "Erro interno do servidor"
+    });
+  }
+});
 
 app.get("/produto", async (req, res) => {
 
