@@ -102,29 +102,29 @@ app.get("/usuario/:id", async (req, res) => {
 });
 
 app.delete("/usuario/:id", async (req, res) => {
-  console.log("Rota DELETE /usuario/:id solicitada"); // Log no terminal para indicar que a rota foi acessada
+    console.log("Rota DELETE /usuario/:id solicitada"); // Log no terminal para indicar que a rota foi acessada
 
-  try {
-    const id = req.params.id; // Obtém o ID da questão a partir dos parâmetros da URL
-    const db = conectarBD(); // Conecta ao banco de dados
-    let consulta = "SELECT * FROM usuario WHERE id_usuario = $1"; // Consulta SQL para selecionar o produto pelo ID
-    let resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
-    let dados = resultado.rows; // Obtém as linhas retornadas pela consulta
+    try {
+        const id = req.params.id; // Obtém o ID da questão a partir dos parâmetros da URL
+        const db = conectarBD(); // Conecta ao banco de dados
+        let consulta = "SELECT * FROM usuario WHERE id_usuario = $1"; // Consulta SQL para selecionar o produto pelo ID
+        let resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
+        let dados = resultado.rows; // Obtém as linhas retornadas pela consulta
 
-    // Verifica se o produto foi encontrado
-    if (dados.length === 0) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" }); // Retorna erro 404 se o usuário não for encontrado
+        // Verifica se o produto foi encontrado
+        if (dados.length === 0) {
+            return res.status(404).json({ mensagem: "Usuário não encontrado" }); // Retorna erro 404 se o usuário não for encontrado
+        }
+
+        consulta = "DELETE FROM usuario WHERE id_usuario = $1"; // Consulta SQL para deletar o usuário pelo ID
+        resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
+        res.status(200).json({ mensagem: "Usuário excluído com sucesso!!" }); // Retorna o resultado da consulta como JSON
+    } catch (e) {
+        console.error("Erro ao excluir usuário:", e); // Log do erro no servidor
+        res.status(500).json({
+            erro: "Erro interno do servidor"
+        });
     }
-
-    consulta = "DELETE FROM usuario WHERE id_usuario = $1"; // Consulta SQL para deletar o usuário pelo ID
-    resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
-    res.status(200).json({ mensagem: "Usuário excluído com sucesso!!" }); // Retorna o resultado da consulta como JSON
-  } catch (e) {
-    console.error("Erro ao excluir usuário:", e); // Log do erro no servidor
-    res.status(500).json({
-      erro: "Erro interno do servidor"
-    });
-  }
 });
 
 app.get("/produto", async (req, res) => {
@@ -167,41 +167,40 @@ app.get("/produto/:id", async (req, res) => {
 });
 
 app.delete("/produto/delete/:id", async (req, res) => {
-  const id = req.params.id;
-  const db = conectarBD();
+    const id = req.params.id;
+    const db = conectarBD();
 
-  console.log(`Tentando excluir o produto com ID: ${id}`);
+    console.log(`Tentando excluir o produto com ID: ${id}`);
 
-  try {
-    // 1. Verifica se o produto existe usando a coluna correta: id_produto
-    const check = await db.query("SELECT * FROM produto WHERE id_produto = $1", [id]);
-    
-    if (check.rows.length === 0) {
-      return res.status(404).json({ mensagem: "Produto não encontrado no banco de dados." });
+    try {
+        const check = await db.query("SELECT * FROM produto WHERE id_produto = $1", [id]);
+
+        if (check.rows.length === 0) {
+            return res.status(404).json({ mensagem: "Produto não encontrado no banco de dados." });
+        }
+
+        const nomeProduto = check.rows[0].nome;
+
+        const consultaDelete = "DELETE FROM produto WHERE id_produto = $1";
+        await db.query(consultaDelete, [id]);
+
+        await db.query("INSERT INTO log_atividades (descricao) VALUES ($1)",
+            [`O produto "${nomeProduto}" (ID: ${id}) foi removido do sistema.`]);
+
+        res.status(200).json({ mensagem: "Produto excluído com sucesso!!" });
+
+    } catch (e) {
+        console.error("Erro crítico ao excluir produto:", e.message);
+        res.status(500).json({
+            erro: "Erro interno do servidor",
+            detalhes: e.message
+        });
     }
-
-    // 2. Executa o DELETE usando a coluna correta: id_produto
-    // Mudei de 'WHERE id' para 'WHERE id_produto'
-    const consultaDelete = "DELETE FROM produto WHERE id_produto = $1"; 
-    await db.query(consultaDelete, [id]);
-
-    console.log(`Produto ${id} excluído com sucesso.`);
-    res.status(200).json({ mensagem: "Produto excluído com sucesso!!" });
-
-  } catch (e) {
-    console.error("Erro crítico ao excluir produto:", e.message);
-    res.status(500).json({
-      erro: "Erro interno do servidor",
-      detalhes: e.message
-    });
-  }
 });
 
 app.post("/produto/add", async (req, res) => { // Ajustei para /add para bater com seu fetch
     try {
         const { nome, preco, imagem, descricao } = req.body;
-        
-        // Validação simples
         if (!nome || !preco) {
             return res.status(400).json({ mensagem: "Nome e Preço são obrigatórios." });
         }
@@ -211,9 +210,11 @@ app.post("/produto/add", async (req, res) => { // Ajustei para /add para bater c
             INSERT INTO produto (nome, preco, imagem, descricao) 
             VALUES ($1, $2, $3, $4)
         `;
-        const valores = [nome, preco, imagem, descricao];
-        
-        await db.query(consulta, valores);
+        await db.query(consulta, [nome, preco, imagem, descricao]);
+
+        await db.query("INSERT INTO log_atividades (descricao) VALUES ($1)",
+            [`Novo produto "${nome}" foi cadastrado no sistema.`]);
+
         res.status(201).json({ mensagem: "Produto criado com sucesso!" });
     } catch (e) {
         console.error("Erro ao inserir produto:", e);
@@ -256,6 +257,9 @@ app.put("/produto/update/:id", async (req, res) => {
             return res.status(404).json({ mensagem: "Produto não encontrado para atualizar." });
         }
 
+        await db.query("INSERT INTO log_atividades (descricao) VALUES ($1)",
+            [`As informações do produto "${nome}" foram atualizadas.`]);
+
         res.json({ mensagem: "Produto atualizado com sucesso!" });
     } catch (e) {
         console.error("Erro ao atualizar Produto:", e.message);
@@ -273,6 +277,12 @@ app.get("/venda", async (req, res) => {
         console.error("Erro ao buscar vendas:", e);
         res.status(500).json({ erro: "Erro ao buscar vendas" });
     }
+});
+
+app.get("/atividades", async (req, res) => {
+    const db = conectarBD();
+    const resultado = await db.query("SELECT * FROM log_atividades ORDER BY data_criacao DESC LIMIT 10");
+    res.json(resultado.rows);
 });
 
 //criar conta
