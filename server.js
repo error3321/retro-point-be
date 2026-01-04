@@ -84,7 +84,7 @@ app.get("/usuario/:id", async (req, res) => {
 
     try {
         const id = req.params.id;
-        const consulta = "SELECT * FROM usuario WHERE id = $1"; // Consulta SQL para selecionar o usuario pelo ID
+        const consulta = "SELECT * FROM usuario WHERE id_usuario = $1"; // Consulta SQL para selecionar o usuario pelo ID
         const resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
         const dados = resultado.rows; // Obtém as linhas retornadas pela consulta
 
@@ -132,7 +132,7 @@ app.get("/produto", async (req, res) => {
     const db = conectarBD();
 
     try {
-        const resultado = await db.query("SELECT * FROM produto"); // Executa uma consulta SQL para selecionar todas as questões
+        const resultado = await db.query("SELECT * FROM produto ORDER BY id_produto ASC"); // Executa uma consulta SQL para selecionar todas as questões
         const dados = resultado.rows; // Obtém as linhas retornadas pela consulta
         res.json(dados); // Retorna o resultado da consulta como JSON
     } catch (e) {
@@ -250,7 +250,7 @@ app.put("/produto/update/:id", async (req, res) => {
             SET nome = $1, preco = $2, imagem = $3, descricao = $4 
             WHERE id_produto = $5
         `;
-        await db.query(consulta, [nome, preco, imagem, descricao, id]);
+        const resultado = await db.query(consulta, [nome, preco, imagem, descricao, id]);
 
         if (resultado.rowCount === 0) {
             return res.status(404).json({ mensagem: "Produto não encontrado para atualizar." });
