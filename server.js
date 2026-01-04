@@ -192,34 +192,28 @@ app.delete("/produto/:id", async (req, res) => {
   }
 });
 
-app.post("/produto/add", async (req, res) => {
-  console.log("Rota POST /produto solicitada"); // Log no terminal para indicar que a rota foi acessada
+app.post("/produto/add", async (req, res) => { // Ajustei para /add para bater com seu fetch
+    try {
+        const { nome, preco, imagem, descricao } = req.body;
+        
+        // Validação simples
+        if (!nome || !preco) {
+            return res.status(400).json({ mensagem: "Nome e Preço são obrigatórios." });
+        }
 
-  try {
-    const {nome, preco, imagem, descricao} = req.body; // Obtém os dados do corpo da requisição
-    // Validação dos dados recebidos
-    if (!nome || !preco) {
-      return res.status(400).json({
-        erro: "Dados inválidos",
-        mensagem:
-          "Todos os campos (id_produto, nome, email, descricao, preco, estoque, destaque, data_cadastro) são obrigatórios.",
-      });
+        const db = conectarBD();
+        const consulta = `
+            INSERT INTO produto (nome, preco, imagem, descricao) 
+            VALUES ($1, $2, $3, $4)
+        `;
+        const valores = [nome, preco, imagem, descricao];
+        
+        await db.query(consulta, valores);
+        res.status(201).json({ mensagem: "Produto criado com sucesso!" });
+    } catch (e) {
+        console.error("Erro ao inserir produto:", e);
+        res.status(500).json({ erro: "Erro interno do servidor" });
     }
-
-    const db = conectarBD(); // Conecta ao banco de dados
-
-    const consulta =
-      "INSERT INTO produto (id_produto, nome, email, descricao, preco, estoque, destaque, data_cadastro) VALUES ($1,$2,$3,$4) "; // Consulta SQL para inserir a questão
-    const valores = [data.enunciado, data.disciplina, data.tema, data.nivel]; // Array com os valores a serem inseridos
-    await db.query(consulta, valores); // Executa a consulta SQL com os valores fornecidos
-    
-    res.status(201).json({ mensagem: "Produto criado com sucesso!" }); // Retorna o resultado da consulta como JSON
-  } catch (e) {
-    console.error("Erro ao inserir produto:", e); // Log do erro no servidor
-    res.status(500).json({
-      erro: "Erro interno do servidor"
-    });
-  }
 });
 
 app.get("/promocao", async (req, res) => {
