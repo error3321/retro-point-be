@@ -242,6 +242,8 @@ app.put("/produto/update/:id", async (req, res) => {
     const { nome, preco, imagem, descricao } = req.body;
     const db = conectarBD();
 
+    console.log(`Tentando atualizar o produto ID: ${id}`);
+
     try {
         const consulta = `
             UPDATE produto 
@@ -249,10 +251,15 @@ app.put("/produto/update/:id", async (req, res) => {
             WHERE id_produto = $5
         `;
         await db.query(consulta, [nome, preco, imagem, descricao, id]);
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({ mensagem: "Produto não encontrado para atualizar." });
+        }
+
         res.json({ mensagem: "Produto atualizado com sucesso!" });
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ erro: "Erro ao atualizar" });
+        console.error("Erro ao atualizar Produto:", e.message);
+        res.status(500).json({ erro: "Erro ao atualizar", detalhes: e.message });
     }
 });
 
