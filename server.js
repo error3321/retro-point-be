@@ -149,7 +149,7 @@ app.get("/produto/:id", async (req, res) => {
 
     try {
         const id = req.params.id;
-        const consulta = "SELECT * FROM produto WHERE id = $1"; // Consulta SQL para selecionar a questão pelo ID
+        const consulta = "SELECT * FROM produto WHERE id_produto = $1"; // Consulta SQL para selecionar a questão pelo ID
         const resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
         const dados = resultado.rows; // Obtém as linhas retornadas pela consulta
 
@@ -172,7 +172,7 @@ app.delete("/produto/:id", async (req, res) => {
   try {
     const id = req.params.id; // Obtém o ID da questão a partir dos parâmetros da URL
     const db = conectarBD(); // Conecta ao banco de dados
-    let consulta = "SELECT * FROM produto WHERE id = $1"; // Consulta SQL para selecionar o produto pelo ID
+    let consulta = "SELECT * FROM produto WHERE id_produto = $1"; // Consulta SQL para selecionar o produto pelo ID
     let resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
     let dados = resultado.rows; // Obtém as linhas retornadas pela consulta
 
@@ -192,13 +192,13 @@ app.delete("/produto/:id", async (req, res) => {
   }
 });
 
-app.post("/produto", async (req, res) => {
+app.post("/produto/add", async (req, res) => {
   console.log("Rota POST /produto solicitada"); // Log no terminal para indicar que a rota foi acessada
 
   try {
-    const data = req.body; // Obtém os dados do corpo da requisição
+    const {nome, preco, imagem, descricao} = req.body; // Obtém os dados do corpo da requisição
     // Validação dos dados recebidos
-    if (!data.enunciado || !data.disciplina || !data.tema || !data.nivel) {
+    if (!nome || !preco) {
       return res.status(400).json({
         erro: "Dados inválidos",
         mensagem:
@@ -238,6 +238,24 @@ app.get("/promocao", async (req, res) => {
     }
 });
 
+app.put("/produto/update/:id", async (req, res) => {
+    const { id } = req.params;
+    const { nome, preco, imagem, descricao } = req.body;
+    const db = conectarBD();
+
+    try {
+        const consulta = `
+            UPDATE produto 
+            SET nome = $1, preco = $2, imagem = $3, descricao = $4 
+            WHERE id_produto = $5
+        `;
+        await db.query(consulta, [nome, preco, imagem, descricao, id]);
+        res.json({ mensagem: "Produto atualizado com sucesso!" });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ erro: "Erro ao atualizar" });
+    }
+});
 
 
 //criar conta
