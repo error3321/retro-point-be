@@ -167,27 +167,32 @@ app.get("/produto/:id", async (req, res) => {
 });
 
 app.delete("/produto/delete/:id", async (req, res) => {
-  console.log("Rota DELETE /produto/delete/:id solicitada"); // Log no terminal para indicar que a rota foi acessada
+  const id = req.params.id;
+  const db = conectarBD();
+
+  console.log(`Tentando excluir o produto com ID: ${id}`);
 
   try {
-    const id = req.params.id; // Obtém o ID da questão a partir dos parâmetros da URL
-    const db = conectarBD(); // Conecta ao banco de dados
-    let consulta = "SELECT * FROM produto WHERE id_produto = $1"; // Consulta SQL para selecionar o produto pelo ID
-    let resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
-
-    // Verifica se o produto foi encontrado
-    if (resultadoCheck.rows.length === 0) {
-      return res.status(404).json({ mensagem: "Produto não encontrado" }); // Retorna erro 404 se o produto não for encontrado
+    // 1. Verifica se o produto existe usando a coluna correta: id_produto
+    const check = await db.query("SELECT * FROM produto WHERE id_produto = $1", [id]);
+    
+    if (check.rows.length === 0) {
+      return res.status(404).json({ mensagem: "Produto não encontrado no banco de dados." });
     }
 
-    const consultaDelete = "DELETE FROM produto WHERE id__produto = $1"; // Consulta SQL para deletar o produto pelo ID
-    resultado = await db.query(consultaDelete, [id]); // Executa a consulta SQL com o ID fornecido
-    
-    res.status(200).json({ mensagem: "Produto excluído com sucesso!!" }); // Retorna o resultado da consulta como JSON
+    // 2. Executa o DELETE usando a coluna correta: id_produto
+    // Mudei de 'WHERE id' para 'WHERE id_produto'
+    const consultaDelete = "DELETE FROM produto WHERE id_produto = $1"; 
+    await db.query(consultaDelete, [id]);
+
+    console.log(`Produto ${id} excluído com sucesso.`);
+    res.status(200).json({ mensagem: "Produto excluído com sucesso!!" });
+
   } catch (e) {
-    console.error("Erro ao excluir produto:", e); // Log do erro no servidor
+    console.error("Erro crítico ao excluir produto:", e.message);
     res.status(500).json({
-      erro: "Erro interno do servidor"
+      erro: "Erro interno do servidor",
+      detalhes: e.message
     });
   }
 });
