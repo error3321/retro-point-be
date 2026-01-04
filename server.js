@@ -263,6 +263,17 @@ app.put("/produto/update/:id", async (req, res) => {
     }
 });
 
+// Rota para listar todas as vendas
+app.get("/venda", async (req, res) => {
+    const db = conectarBD();
+    try {
+        const resultado = await db.query("SELECT * FROM venda");
+        res.json(resultado.rows);
+    } catch (e) {
+        console.error("Erro ao buscar vendas:", e);
+        res.status(500).json({ erro: "Erro ao buscar vendas" });
+    }
+});
 
 //criar conta
 app.post("/register", async (req, res) => {
