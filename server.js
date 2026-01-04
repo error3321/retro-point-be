@@ -15,9 +15,13 @@ const app = express(); // Inicializa o servidor Express
 
 // Configurar CORS com origens permitidas
 const allowedOrigins = [
-    'https://super-space-pancake-wrj6wv5g555259jq-5501.app.github.dev',
+    'https://trabalhofinal-seven.vercel.app',
     'http://localhost:3000',
-    'http://localhost:5501'
+    'http://localhost:5501',
+    'https://organic-space-engine-pjgv7pvjw7rxc6xw5-5501.app.github.dev',
+    'http://127.0.0.1:5501', // Adicionado: variação comum do Live Server
+    'http://localhost:5500', // Adicionado: porta padrão do Live Server
+    'http://127.0.0.1:5500' // Adicionado
     // Colocar o link do front-end da vercel quando disponível
 ];
 
