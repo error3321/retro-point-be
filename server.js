@@ -166,23 +166,23 @@ app.get("/produto/:id", async (req, res) => {
     }
 });
 
-app.delete("/produto/:id", async (req, res) => {
-  console.log("Rota DELETE /produto/:id solicitada"); // Log no terminal para indicar que a rota foi acessada
+app.delete("/produto/delete/:id", async (req, res) => {
+  console.log("Rota DELETE /produto/delete/:id solicitada"); // Log no terminal para indicar que a rota foi acessada
 
   try {
     const id = req.params.id; // Obtém o ID da questão a partir dos parâmetros da URL
     const db = conectarBD(); // Conecta ao banco de dados
     let consulta = "SELECT * FROM produto WHERE id_produto = $1"; // Consulta SQL para selecionar o produto pelo ID
     let resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
-    let dados = resultado.rows; // Obtém as linhas retornadas pela consulta
 
     // Verifica se o produto foi encontrado
-    if (dados.length === 0) {
+    if (resultadoCheck.rows.length === 0) {
       return res.status(404).json({ mensagem: "Produto não encontrado" }); // Retorna erro 404 se o produto não for encontrado
     }
 
-    consulta = "DELETE FROM produto WHERE id = $1"; // Consulta SQL para deletar o produto pelo ID
-    resultado = await db.query(consulta, [id]); // Executa a consulta SQL com o ID fornecido
+    const consultaDelete = "DELETE FROM produto WHERE id__produto = $1"; // Consulta SQL para deletar o produto pelo ID
+    resultado = await db.query(consultaDelete, [id]); // Executa a consulta SQL com o ID fornecido
+    
     res.status(200).json({ mensagem: "Produto excluído com sucesso!!" }); // Retorna o resultado da consulta como JSON
   } catch (e) {
     console.error("Erro ao excluir produto:", e); // Log do erro no servidor
